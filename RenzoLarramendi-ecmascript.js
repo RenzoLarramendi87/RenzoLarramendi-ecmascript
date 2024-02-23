@@ -1,76 +1,90 @@
+const fs = require('fs');
+
 class ProductManager {
-    constructor() {
-        this.products = [];
-        this.nextProductId = 1;
-        
+    static #ultimoId = 1;
+    #products;
+    path;
+
+    constructor(path) {
+        this.#products = [];
+        this.path = path;
     }
-    //Metodo para agregar un producto
-    addProduct(product) {
-        if (!this.isValidProduct(product)) {
-            console.error('El producto no es valido.');
+
+    getProducts() {
+        return this.#products;
+    }
+
+    #getNuevoId() {
+        const id = ProductManager.#ultimoId;
+        ProductManager.#ultimoId++;
+        return id;
+    }
+
+    addProduct(title, description, price, thumbnail, code, stock) {
+        if (!title || !description || !price || !thumbnail || !code || !stock) {
+            console.error("Todos los campos son obligatorios");
             return;
         }
 
-        product.id = this.nextProductId++; 
-        this.products.push(product);
-        console.log('Producto agregado:' , product);
-    }
-    //Metodo para validar un producto
-    isValidProduct(product) {
-        if (!product || !product.code || !product.name || product.price) {
-            console.error('Todos los campos son obligatorios.');
-            return false;               
+        const existingCode = this.#products.some(prod => prod.code === code);
+        if (existingCode) {
+            console.error("Este codigo ya existe");
+            return;
         }
 
-        if (this.products.some(p => p.code === product.code)) {
-            console.error('El codigo del producto ya existe.');
-            return false;
+        const product = {
+            id: this.#getNuevoId(),
+            title,
+            description,
+            price,
+            thumbnail,
+            code,
+            stock,
         }
-            return true;
+
+        this.#products.push(product);
+        this.#guardarProductosEnArchivo();
     }
 
-    //Metodo para obtener todos los productos
-    getAllProducts() {
-        return this.products;        
+    updateProduct(productId, updatedFields) {
+        const productIndex = this.#products.findIndex(prod => prod.id === productId);
+        if (productIndex === -1) {
+            console.error("Producto no encontrado");
+            return;
+        }
+
+        this.#products[productIndex] = { ...this.#products[productIndex], ...updatedFields };
+        this.#guardarProductosEnArchivo();
     }
 
-    //Metodo para buscar un producto por su ID
+    deleteProduct(productId) {
+        const productIndex = this.#products.findIndex(prod => prod.id === productId);
+        if (productIndex === -1) {
+            console.error("Producto no encontrado");
+            return;
+        }
+
+        this.#products.splice(productIndex, 1);
+        this.#guardarProductosEnArchivo();
+    }
+
     getProductById(productId) {
-        const product = this.products.find(p => p.id === productId);
-        if (product) {
-            return product;
-        }
-            else {
-                console.error('Not found');
-            }
+        return this.#products.find(prod => prod.id === productId);
     }
 
-    
-
-
+    #guardarProductosEnArchivo() {
+        fs.writeFileSync(this.path, JSON.stringify(this.#products, null, 2), 'utf8');
+    }
 }
 
-const productManagerInstance = new ProductManager();
 
-productManagerInstance.addProduct("producto prueba 1", "Este es un producto prueba 1", 200, "Sin imagen", "abc121", 25);
-productManagerInstance.addProduct("producto prueba 2", "Este es un producto prueba 1", 200, "Sin imagen", "abc122", 25);
-productManagerInstance.addProduct("producto prueba 3", "Este es un producto prueba 1", 200, "Sin imagen", "abc122", 25);
-productManagerInstance.addProduct("producto prueba 6", "Este es un producto prueba 1", 200, "Sin imagen", "abc126", 25);
-productManagerInstance.addProduct("producto prueba 7", "Este es un producto prueba 1", 200, "Sin imagen", "abc127", 25);
-productManagerInstance.addProduct("producto prueba 8", "Este es un producto prueba 1", 200, "Sin imagen", "abc128", 25);
-productManagerInstance.addProduct("producto prueba 9", "Este es un producto prueba 1", 200, "Sin imagen", "abc129", 25);
-productManagerInstance.addProduct("producto prueba 10", "Este es un producto prueba 1", 200, "Sin imagen", "abc1210", 25);
+const manager = new ProductManager('./productos.json');
+manager.addProduct('titulo1', 'descripcion1', 50, 'sin imagen', 'abc123', 25);
+console.log(manager.getProducts());
+
+manager.updateProduct(1, { title: 'Nuevo titulo', price: 100 });
+console.log(manager.getProducts());
 
 
-// Codigo repetido
-productManagerInstance.addProduct("producto prueba 4", "Este es un producto prueba 1", 200, "Sin imagen", "abc124", 25);
-
-// Sin todos los campos completos
-productManagerInstance.addProduct("producto prueba 5", "Este es un producto prueba 1", 200, "Sin imagen", 25
-);
-
-
-
-
-
-console.log(productManager.getProductsById(6))
+manager.deleteProduct(1);
+console.log(manager.getProducts());
