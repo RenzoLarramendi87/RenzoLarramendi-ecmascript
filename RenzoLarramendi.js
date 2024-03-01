@@ -78,13 +78,6 @@ class ProductManager {
 }
 
 
-const manager = new ProductManager('./productos.json');
-manager.addProduct('titulo1', 'descripcion1', 50, 'sin imagen', 'abc123', 25);
-console.log(manager.getProducts());
-
-manager.updateProduct(1, { title: 'Nuevo titulo', price: 100 });
-console.log(manager.getProducts());
 
 
-manager.deleteProduct(1);
-console.log(manager.getProducts());
+
